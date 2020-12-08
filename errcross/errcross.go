@@ -31,7 +31,7 @@ type errcrossService struct {
 	errcrossRepository ErrcrossRepository
 }
 
-func NewErrcrossService(repository ErrcrossRepository) ErrcrossService {
+func NewErrcrossService(repository ErrcrossRepository) *errcrossService {
 	return &errcrossService{
 		repository,
 	}
@@ -41,16 +41,12 @@ func (e *errcrossService) Find(key string) (*Errcross, error) {
 	return e.errcrossRepository.Find(key)
 }
 
-func (e *errcrossService) Store(url string) error {
-	errcross := Errcross{
-		URL: url,
-	}
-
+func (e *errcrossService) Store(errcross *Errcross) error {
 	//validate that the url is not empty and is in a url format
 	if err := validate.Validate(errcross); err != nil {
 		return errs.Wrap(ErrMalformedUrl, "@ErrcrossService.Store")
 	}
 	errcross.Key = shortid.New().Generate()
 	errcross.Timestamp = time.Now().UTC().Unix()
-	return e.errcrossRepository.Store(&errcross)
+	return e.errcrossRepository.Store(errcross)
 }

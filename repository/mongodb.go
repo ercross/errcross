@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	errcross2 "github.com/ercross/errcross/errcross"
 	"time"
 
 	errs "github.com/pkg/errors"
@@ -9,8 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
-
-	"github.com/ercross/errcross"
 )
 
 type mongoRepo struct {
@@ -36,7 +35,7 @@ func newMongoClient(mongoUrl string, timeout int) (*mongo.Client, error) {
 	return client, nil
 }
 
-func NewMongoRepo(mongoUrl, dbName string, timeout int) (errcross.ErrcrossRepository, error) {
+func NewMongoRepo(mongoUrl, dbName string, timeout int) (errcross2.ErrcrossRepository, error) {
 	mongoRepo := &mongoRepo{
 		timeout:      time.Duration(timeout) * time.Second,
 		databaseName: dbName,
@@ -51,23 +50,23 @@ func NewMongoRepo(mongoUrl, dbName string, timeout int) (errcross.ErrcrossReposi
 
 const dbName = "errcrossDb"
 
-func (m *mongoRepo) Find(key string) (*errcross.Errcross, error) {
+func (m *mongoRepo) Find(key string) (*errcross2.Errcross, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
-	e := &errcross.Errcross{}
+	e := &errcross2.Errcross{}
 	collection := m.client.Database(m.databaseName).Collection(dbName)
 	filter := bson.M{"key": key}
 	err := collection.FindOne(ctx, filter).Decode(&e)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, errs.Wrap(errcross.ErrKeyNotFound, "repository.mongodb.Find")
+			return nil, errs.Wrap(errcross2.ErrKeyNotFound, "repository.mongodb.Find")
 		}
 		return nil, errs.Wrap(err, "repository.mongodb.Find")
 	}
 	return e, nil
 }
 
-func (m *mongoRepo) Store(e *errcross.Errcross) error {
+func (m *mongoRepo) Store(e *errcross2.Errcross) error {
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 	collection := m.client.Database(m.databaseName).Collection(dbName)

@@ -2,14 +2,13 @@ package api
 
 import (
 	"encoding/json"
+	errcross2 "github.com/ercross/errcross/errcross"
 	"io/ioutil"
 	"log"
 	"net/http"
 
 	"github.com/go-chi/chi"
 	errs "github.com/pkg/errors"
-
-	"github.com/ercross/errcross"
 )
 
 type ErrcrossHandler interface {
@@ -18,10 +17,10 @@ type ErrcrossHandler interface {
 }
 
 type handler struct {
-	errcrossService errcross.ErrcrossService
+	errcrossService errcross2.ErrcrossService
 }
 
-func NewHandler(errcrossService errcross.ErrcrossService) ErrcrossHandler {
+func NewHandler(errcrossService errcross2.ErrcrossService) ErrcrossHandler {
 	return &handler{errcrossService}
 }
 
@@ -29,7 +28,7 @@ func (h *handler) Get(w http.ResponseWriter, r *http.Request) {
 	key := chi.URLParam(r, "key")
 	e, err := h.errcrossService.Find(key)
 	if err != nil {
-		if errs.Cause(err) == errcross.ErrKeyNotFound {
+		if errs.Cause(err) == errcross2.ErrKeyNotFound {
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return
 		}
@@ -52,7 +51,7 @@ func (h *handler) Post(w http.ResponseWriter, r *http.Request) {
 	}
 	err = h.errcrossService.Store(e)
 	if err != nil {
-		if errs.Cause(err) == errcross.ErrKeyNotFound {
+		if errs.Cause(err) == errcross2.ErrKeyNotFound {
 			http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 			return
 		}
@@ -76,8 +75,8 @@ func setupResponse(w http.ResponseWriter, responseBody []byte, statusCode int) {
 	}
 }
 
-func decode(input []byte) (*errcross.Errcross, error) {
-	e := errcross.Errcross{}
+func decode(input []byte) (*errcross2.Errcross, error) {
+	e := errcross2.Errcross{}
 
 	if err := json.Unmarshal(input, &e); err != nil {
 		return nil, errs.Wrap(err, "errcross.Decode")
@@ -85,7 +84,7 @@ func decode(input []byte) (*errcross.Errcross, error) {
 	return &e, nil
 }
 
-func encode(input *errcross.Errcross) ([]byte, error) {
+func encode(input *errcross2.Errcross) ([]byte, error) {
 	rawMsg, err := json.Marshal(input)
 	if err != nil {
 		return nil, errs.Wrap(err, "errcross.Encode")
